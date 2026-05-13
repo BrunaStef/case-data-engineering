@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 ---
 
-# First Part
+# First Part - Data Preparation and Integration
 
 ## Automated Data Collection
 
@@ -299,3 +299,279 @@ data/final_parquet/
 ```
 
 ---
+
+# Second Part — Dimensional Modeling
+
+## Dimensional Model
+
+A dimensional model following the **Star Schema** approach was designed for the constrained-off wind generation domain.
+
+The model separates:
+
+- **Fact table** → generation and operational metrics
+- **Dimension tables** → descriptive business context
+
+---
+
+### Fact Table
+
+#### `fact_generation`
+
+The fact table stores the wind generation measurements and operational metrics.
+
+#### Granularity
+
+The chosen granularity is:
+
+> One record per SPE per timestamp (`din_instante`).
+
+This granularity preserves the original detail level from the SPE dataset and allows temporal analysis at the individual wind plant level.
+
+---
+
+#### Metrics
+
+The following numerical metrics were included:
+
+- `val_ventoverificado`
+- `val_geracaoestimada`
+- `val_geracaoverificada`
+- `val_geracao`
+- `val_disponibilidade`
+- `val_geracaoreferencia`
+- `val_geracaoreferenciafinal`
+
+---
+
+#### Foreign Keys
+
+The fact table contains the following foreign keys:
+
+- `spe_key`
+- `conjunto_key`
+- `tempo_key`
+
+---
+
+### Dimension Tables
+
+#### `dim_spe`
+
+Stores descriptive information about individual SPEs.
+
+##### Attributes
+
+- `spe_key` (Primary Key)
+- `nom_usina`
+- `id_ons`
+- `ceg`
+- `projeto`
+- `nom_modalidadeoperacao`
+
+---
+
+#### `dim_conjunto`
+
+Stores information about wind complexes/conjuntos.
+
+##### Attributes
+
+- `conjunto_key` (Primary Key)
+- `nom_conjuntousina`
+- `id_subsistema`
+- `nom_subsistema`
+- `id_estado`
+- `nom_estado`
+
+---
+
+#### `dim_tempo`
+
+Stores temporal attributes extracted from `din_instante`.
+
+##### Attributes
+
+- `tempo_key` (Primary Key)
+- `din_instante`
+- `ano`
+- `mes`
+- `dia`
+- `hora`
+
+---
+
+### Relationships
+
+The dimensional model relationships are:
+
+- `fact_generation.spe_key` → `dim_spe.spe_key`
+- `fact_generation.conjunto_key` → `dim_conjunto.conjunto_key`
+- `fact_generation.tempo_key` → `dim_tempo.tempo_key`
+
+---
+
+### Running the Modeling Script
+
+Execute the following command from the project root:
+
+```bash
+python src/modeling/build_star_schema.py
+```
+
+---
+
+### Output
+
+The generated dimensional model tables will be saved to:
+
+- data/warehouse/
+
+Structure:
+
+```text
+data/
+└── warehouse/
+    ├── dimensions/
+    │   ├── dim_spe.parquet
+    │   ├── dim_conjunto.parquet
+    │   └── dim_tempo.parquet
+    │
+    └── facts/
+        └── fact_generation.parquet
+```
+
+---
+
+## Design Decisions
+
+### Fact Table Granularity
+
+The fact table granularity was defined as:
+
+> One record per SPE per timestamp (`din_instante`).
+
+This granularity was chosen because the SPE dataset already represents the most detailed operational level available in the source data.
+
+Using this level of detail allows:
+
+- temporal analysis of wind generation
+- comparisons between SPEs
+- project-level aggregations
+- future analytical flexibility without losing information
+
+It also preserves the original business semantics of the ONS detailed dataset.
+
+---
+
+### Slowly Changing Dimensions (SCD)
+
+At the current scope of the project, there is no strong need for Slowly Changing Dimensions.
+
+The descriptive attributes used in the dimensions are relatively stable, such as:
+
+- project
+- SPE
+- conjunto
+- subsystem
+- state
+
+However, in a production-grade environment, some dimensions could eventually require:
+
+#### SCD Type 2
+
+Especially for attributes that may change historically over time, such as:
+
+- project ownership
+- operational classification
+- regional organization
+
+SCD Type 2 would preserve historical versions of the records while maintaining analytical consistency over time.
+
+For this project, dimensions were implemented as static snapshots.
+
+---
+
+### Denormalization Decisions
+
+A small amount of denormalization was intentionally applied in the dimensional model.
+
+For example:
+
+- subsystem information
+- state information
+
+were kept directly inside `dim_conjunto`.
+
+This decision was made because:
+
+- these attributes have low cardinality
+- they rarely change
+- it simplifies analytical queries
+- it reduces unnecessary joins
+
+The goal was to prioritize simplicity and query performance while maintaining a clean star schema structure.
+
+---
+
+### Modeling Strategy Summary
+
+The dimensional model was designed to:
+
+- preserve the SPE-level analytical granularity
+- optimize BI and aggregation queries
+- reduce redundancy in the fact table
+- simplify analytical exploration
+- follow common Data Warehouse best practices
+
+---
+
+## Model Implementation
+
+The dimensional model was implemented programmatically using:
+
+- Python
+- Pandas
+- Parquet
+
+The implementation consumes the consolidated dataset generated in Part 1 and transforms it into a Star Schema structure composed of:
+
+- dimension tables
+- fact table
+
+---
+
+### Input Dataset
+
+The modeling process uses the following dataset:
+
+```text
+data/processed/cdv_spe_wind_joined.csv
+```
+
+---
+
+### Generated Tables
+
+#### Dimension Tables
+
+- `dim_spe.parquet`
+- `dim_conjunto.parquet`
+- `dim_tempo.parquet`
+
+Saved in:
+
+- data/warehouse/dimensions/
+
+---
+
+#### Fact Table
+
+- `fact_generation.parquet`
+
+Saved in:
+
+- data/warehouse/facts/
+
+---
+
+# Third Part - 
