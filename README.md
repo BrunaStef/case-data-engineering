@@ -574,4 +574,306 @@ Saved in:
 
 ---
 
-# Third Part - 
+# Third Part — Robust ELT Pipeline
+
+In this stage, the original scripts from the first part were refactored into a modular and robust ELT pipeline following software engineering best practices.
+
+The pipeline was designed with clear separation between extraction, loading, and transformation layers, using DuckDB as the analytical processing engine.
+
+---
+
+## ELT Architecture
+
+The pipeline follows the ELT approach:
+
+```text
+Extract → Load → Transform
+```
+---
+
+### Extract
+
+Raw CSV files are downloaded directly from the public AWS S3 bucket provided by ONS.
+
+### Load
+
+The raw files are loaded into DuckDB without prior transformation.
+
+### Transform
+
+All transformations are executed inside DuckDB using SQL.
+
+---
+
+## Pipeline Structure
+
+```text
+src/
+│
+├── extract/
+│   └── extract_data.py
+│
+├── load/
+│   └── load_duckdb.py
+│
+├── transform/
+│   ├── transform_duckdb.py
+│   ├── quality_report.py
+│   ├── filter_cdv_duckdb.py
+│   ├── join_data.py
+│   └── export_parquet.py
+│
+├── utils/
+│   └── logger.py
+│
+└── pipeline.py
+```
+
+---
+
+## Pipeline Execution
+
+Run the pipeline with:
+
+```bash
+python -m src.pipeline
+```
+
+---
+
+## Pipeline Steps
+
+### 1. Extract
+
+Downloads monthly files for both datasets:
+
+- Wind farm dataset
+- SPE detail dataset
+
+Features implemented:
+
+- Retry mechanism for download failures
+- Informative logging
+- Skip download if file already exists
+
+---
+
+### 2. Load
+
+Loads all raw CSV files into DuckDB tables. The loading process consolidates all monthly files automatically.
+
+---
+
+### 3. Transform
+
+Transformations are executed directly inside DuckDB.
+
+---
+
+### 4. Data Quality Report
+
+A detailed quality report is generated and is saved in:
+
+- data/reports/data_quality_report_pipeline.json
+
+---
+
+### 5. Casa dos Ventos Filtering
+
+The pipeline filters only Casa dos Ventos SPEs using the mapping file:
+
+```text
+spes_casa_dos_ventos.csv
+```
+
+---
+
+### 6. Dataset Join
+
+The SPE dataset is related to the wind farm dataset using the logical business key:
+
+- `nom_conjuntousina`
+- `nom_usina`
+- `din_instante`
+
+Join type:
+
+- `LEFT JOIN`
+
+---
+
+### 7. Parquet Persistence
+
+The final dataset is exported in partitioned Parquet format.
+
+Partition strategy:
+
+- `year`
+- `month`
+
+Output is saved in:
+
+- data/final_parquet_pipeline/
+
+---
+
+## Idempotency
+
+The pipeline can be safely re-executed without duplicating data because:
+
+- Existing files are not downloaded again
+- DuckDB tables use `CREATE OR REPLACE`
+- Final parquet export overwrites previous partitions safely
+
+---
+
+## Logging
+
+The project uses Python's `logging` module.
+
+Implemented log levels:
+
+- INFO
+- WARNING
+- ERROR
+
+Logs are saved to:
+
+- logs/pipeline.log
+
+---
+
+## Error Handling
+
+The pipeline implements:
+
+- Retry for download failures
+- Informative error messages
+
+---
+
+## Configuration
+
+Pipeline parameters are centralized in:
+
+- config/settings.py
+
+---
+
+## Pipeline Orchestration
+
+In a production environment, this pipeline could be orchestrated with the main goal of automating execution, monitoring, retries, scheduling, and failure notifications.
+
+---
+
+### Architecture
+
+A possible production architecture would be:
+
+```text id="hsk4xp"
+Cloud Scheduler / Airflow
+            ↓
+      Pipeline Trigger
+            ↓
+      Extract Layer
+            ↓
+       DuckDB Load
+            ↓
+      SQL Transformations
+            ↓
+   Data Quality Validation
+            ↓
+     Final Parquet Export
+            ↓
+     Data Lake / Storage
+```
+
+---
+
+### Airflow Orchestration Example
+
+Using Apache Airflow, the pipeline could be separated into independent tasks:
+
+1. `extract_task`
+
+   * Download monthly CSV files
+
+2. `load_task`
+
+   * Load raw files into DuckDB
+
+3. `transform_task`
+
+   * Execute SQL transformations
+
+4. `quality_task`
+
+   * Generate quality report
+
+5. `filter_task`
+
+   * Filter Casa dos Ventos assets
+
+6. `join_task`
+
+   * Join datasets
+
+7. `export_task`
+
+   * Export partitioned parquet files
+
+Task dependencies would guarantee the correct execution order.
+
+---
+
+### Scheduling Strategy
+
+The pipeline could run automatically:
+
+- Daily
+- Weekly
+- Monthly
+
+For the ONS constrained-off datasets, a monthly schedule would likely be sufficient.
+
+---
+
+### Failure Recovery
+
+The orchestration layer would provide:
+
+- Automatic retries
+- Failure alerts
+- Execution logs
+- Task monitoring
+- Dependency management
+
+This improves reliability and operational visibility.
+
+---
+
+### Scalability Considerations
+
+Although the current project uses local DuckDB processing, the architecture could be adapted to cloud environments using:
+
+- Amazon S3
+- Google Cloud Storage
+- BigQuery
+- Databricks
+
+---
+
+### Why This Approach
+
+This orchestration strategy was chosen because it provides:
+
+- Modular execution
+- Easier maintenance
+- Better observability
+- Automatic scheduling
+- Fault tolerance
+- Scalability for larger datasets
+
+---
+
+# Fourth Part - 

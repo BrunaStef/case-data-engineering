@@ -7,8 +7,12 @@ load_dotenv()
 START_DATE = os.getenv("START_DATE")
 END_DATE = os.getenv("END_DATE")
 
-RAW_PATH = Path(os.getenv("RAW_PATH"))
+RAW_PATH = Path("data/raw")
 
-DB_PATH = Path(os.getenv("DB_PATH"))
+DB_PATH = Path("data/duckdb/cdv_pipeline.duckdb")
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+REPORT_PATH = Path("data/reports")
+
+FINAL_PARQUET_PATH = Path(
+    "data/final_parquet_pipeline"
+)

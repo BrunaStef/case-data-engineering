@@ -11,9 +11,6 @@ def transform():
     """
     Executes SQL transformations inside DuckDB.
 
-    Creates cleaned tables from raw datasets
-    and removes duplicate records.
-
     Returns
 
     None
@@ -27,8 +24,11 @@ def transform():
 
     CREATE OR REPLACE TABLE spe_clean AS
 
-    SELECT DISTINCT *
+    SELECT DISTINCT
+        *,
+        CAST(din_instante AS TIMESTAMP) AS data_hora
     FROM raw_spe
+    WHERE flg_dadoventoinvalido = 0
 
     """)
 
@@ -36,7 +36,9 @@ def transform():
 
     CREATE OR REPLACE TABLE wind_clean AS
 
-    SELECT DISTINCT *
+    SELECT DISTINCT
+        *,
+        CAST(din_instante AS TIMESTAMP) AS data_hora
     FROM raw_wind
 
     """)
