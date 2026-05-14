@@ -2,3 +2,5 @@ pandas
 requests
 pyarrow
 colorama
+duckdb
+python-dotenv
