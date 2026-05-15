@@ -876,4 +876,133 @@ This orchestration strategy was chosen because it provides:
 
 ---
 
-# Fourth Part - 
+# Fourth Part - Data Validation and Quality Assurance
+
+This stage of the project focuses on ensuring the reliability, consistency, and integrity of the data.
+
+An automated validation pipeline was implemented to verify:
+
+- Schema consistency
+- Data freshness
+- Business rules
+- Timestamp continuity
+- Data completeness
+
+The validations are executed over the partitioned parquet dataset stored in:
+
+- data/final_parquet_pipeline/
+
+The pipeline generates validation logs and a JSON report containing all validation results.
+
+---
+
+## Validation Pipeline Structure
+
+```text
+src/
+└── validation/
+    ├── __init__.py
+    └── validate_pipeline.py
+```
+
+Generated outputs:
+
+```text
+logs/
+└── validate_pipeline_YYYYMMDD_HHMMSS.log
+
+data/
+└── validation_reports/
+    └── validation_report.json
+```
+
+---
+
+## Implemented Validations
+
+### 1. Schema Validation
+
+The pipeline verifies whether:
+
+- All expected columns exist
+- Column data types are correct
+
+---
+
+### 2. Freshness Check
+
+The pipeline validates whether the latest expected month is present in the dataset.
+
+---
+
+### 3. Business Rules Validation
+
+The following business rules were implemented:
+
+- Power generation cannot be negative
+- Wind speed must be between 0 and 40 m/s
+- Generation cannot exceed reference generation
+- Duplicate timestamps are not allowed
+- Projects cannot be null
+- Timestamp continuity is verified for each project
+
+---
+
+### 4. Timestamp Continuity Validation
+
+The pipeline checks for unexpected timestamp gaps for each project.
+
+---
+
+### 5. Completeness Validation
+
+The pipeline calculates the percentage of expected timestamps versus received timestamps for each project.
+
+Projects below the configured threshold are automatically flagged.
+
+Configured threshold:
+
+```text
+threshold = 95
+```
+
+---
+
+## Running the Validation Pipeline
+
+Run the validation pipeline with:
+
+```bash
+python -m src.validation.validate_pipeline
+```
+
+---
+
+## Validation Report
+
+After execution, the pipeline automatically generates:
+
+- data/validation_reports/validation_report.json
+
+This report contains:
+
+- Schema validation results
+- Freshness validation
+- Business rule violations
+- Timestamp continuity analysis
+- Completeness percentages
+- Threshold alerts
+
+---
+
+## Technologies Used
+
+- Python
+- Pandas
+- PyArrow
+- JSON
+- Logging
+
+---
+
+# Fifth Part - 

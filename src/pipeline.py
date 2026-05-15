@@ -9,8 +9,7 @@ from src.transform.export_parquet import export_parquet
 
 from src.utils.logger import get_logger
 
-logger = get_logger()
-
+logger = get_logger("pipeline")
 
 def run_pipeline():
     """

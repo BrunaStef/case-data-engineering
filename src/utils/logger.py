@@ -1,6 +1,6 @@
+from datetime import datetime
 import logging
 from pathlib import Path
-from datetime import datetime
 
 LOG_PATH = Path("logs")
 LOG_PATH.mkdir(exist_ok=True)
@@ -9,10 +9,7 @@ timestamp = datetime.now().strftime(
     "%Y%m%d_%H%M%S"
 )
 
-LOG_FILE = LOG_PATH / f"pipeline_{timestamp}.log"
-
-
-def get_logger():
+def get_logger(name="pipeline"):
     """
     Creates and configures the project logger.
 
@@ -20,8 +17,7 @@ def get_logger():
 
     Configured logger instance.
     """
-
-    logger = logging.getLogger("cdv_pipeline")
+    logger = logging.getLogger(name)
 
     if not logger.handlers:
 
@@ -31,7 +27,12 @@ def get_logger():
             "%(asctime)s | %(levelname)s | %(message)s"
         )
 
-        file_handler = logging.FileHandler(LOG_FILE)
+        log_file = (
+            LOG_PATH
+            / f"{name}_{timestamp}.log"
+        )
+
+        file_handler = logging.FileHandler(log_file)
 
         file_handler.setFormatter(formatter)
 
