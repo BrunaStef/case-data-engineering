@@ -35,7 +35,8 @@ EXPECTED_COLUMNS = {
     "val_geracaoreferencia": "float64",
     "val_geracaoreferenciafinal": "float64",
     "year": "category",
-    "month": "category"
+    "month": "category",
+    "cod_razaorestricao": "str"
 }
 
 

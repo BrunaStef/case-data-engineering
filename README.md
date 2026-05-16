@@ -202,11 +202,11 @@ The following columns from the Wind Farm dataset were incorporated into the fina
 - `val_disponibilidade`
 - `val_geracaoreferencia`
 - `val_geracaoreferenciafinal`
+- `cod_razaorestricao`
 
 Operational restriction fields such as:
 
 - `val_geracaolimitada`
-- `cod_razaorestricao`
 - `cod_origemrestricao`
 - `dsc_restricao`
 
@@ -331,7 +331,7 @@ This granularity preserves the original detail level from the SPE dataset and al
 
 #### Metrics
 
-The following numerical metrics were included:
+The following metrics were included:
 
 - `val_ventoverificado`
 - `val_geracaoestimada`
@@ -340,6 +340,7 @@ The following numerical metrics were included:
 - `val_disponibilidade`
 - `val_geracaoreferencia`
 - `val_geracaoreferenciafinal`
+- `cod_razaorestricao`
 
 ---
 

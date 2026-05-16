@@ -31,7 +31,8 @@ def join_datasets():
         w.val_geracao,
         w.val_disponibilidade,
         w.val_geracaoreferencia,
-        w.val_geracaoreferenciafinal
+        w.val_geracaoreferenciafinal,
+        w.cod_razaorestricao  
 
     FROM spe_cdv s
 

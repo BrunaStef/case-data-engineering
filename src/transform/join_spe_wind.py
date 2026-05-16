@@ -65,6 +65,7 @@ def join_datasets(spe: pd.DataFrame, wind: pd.DataFrame):
             "val_disponibilidade",
             "val_geracaoreferencia",
             "val_geracaoreferenciafinal",
+            "cod_razaorestricao"
         ]
     ]
 

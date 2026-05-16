@@ -199,9 +199,11 @@ def create_fact_table(
             "val_geracao",
             "val_disponibilidade",
             "val_geracaoreferencia",
-            "val_geracaoreferenciafinal"
+            "val_geracaoreferenciafinal",
+            "cod_razaorestricao"
         ]
     ]
+    fact["cod_razaorestricao"] = fact["cod_razaorestricao"].fillna("SEM_RESTRICAO")
 
     return fact
 
