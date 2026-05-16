@@ -4,3 +4,6 @@ pyarrow
 colorama
 duckdb
 python-dotenv
+fastapi
+uvicorn
+pydantic
