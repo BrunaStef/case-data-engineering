@@ -1006,4 +1006,147 @@ This report contains:
 
 ---
 
-# Fifth Part - 
+
+# Fifth Part — Data Serving (REST API)
+
+In this stage, the processed and modeled datasets are exposed through a **REST API built with FastAPI**, enabling external consumption of analytical results.
+
+The API provides endpoints for querying wind generation data, project metadata, and restriction summaries.
+
+---
+
+## API Framework
+
+The API was built using:
+
+- FastAPI
+- Pydantic (validation)
+- Pandas (data processing)
+- Parquet (data source)
+
+FastAPI was chosen due to:
+
+- Automatic Swagger/OpenAPI documentation
+- High performance
+- Built-in validation system
+
+---
+
+## Running the API
+
+To start the API locally:
+
+```bash
+uvicorn src.api.app:app --reload
+```
+
+---
+
+After starting the service, access:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+FastAPI automatically generates:
+
+- Swagger UI
+- OpenAPI schema
+- Interactive endpoint testing
+
+---
+
+## Project Structure (API Layer)
+
+```text
+src/api/
+│
+├── app.py
+├── routes.py
+├── services.py
+└── schemas.py
+```
+
+---
+
+## Endpoints
+
+---
+
+### 1. Health Check
+
+#### GET /health
+
+Returns API health status.
+
+---
+
+### 2. Projects
+
+#### GET /projects
+
+Returns available wind generation projects with metadata.
+
+---
+
+### 3. Generation Data
+
+#### GET /generation/{project_id}
+
+Returns aggregated generation data for a project.
+
+#### Query Parameters
+
+- project_id (required)
+- start_date (optional)
+- end_date (optional)
+- frequency: daily | monthly
+
+---
+
+### 4. Restrictions Summary
+
+#### GET /restrictions/summary
+
+Returns a summary of generation restrictions grouped by restriction reason (`cod_razaorestricao`).
+
+---
+
+#### Filters (optional)
+
+- project_id
+- start_date
+- end_date
+
+---
+
+## Technical Features
+
+### Automatic Documentation
+- Swagger UI at `/docs`
+- OpenAPI schema generated automatically
+
+---
+
+### Input Validation
+- Path and query parameters validated with Pydantic
+- Invalid inputs return HTTP 400
+
+---
+
+### Error Handling
+- 404 for missing projects
+- 400 for invalid parameters
+- Safe handling of null values
+
+---
+
+### Data Source
+
+The API reads from:
+
+- data/final_parquet_pipeline/
+
+Generated from previous pipeline stages.
+
+---

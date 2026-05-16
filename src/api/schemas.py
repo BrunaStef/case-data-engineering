@@ -22,7 +22,7 @@ class GenerationResponse(BaseModel):
 
 class RestrictionSummaryResponse(BaseModel):
 
-    cod_razaorestricao: str
+    cod_razaorestricao: Optional[str]
 
     total_hours: int
 
