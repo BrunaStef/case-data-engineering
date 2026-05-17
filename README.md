@@ -1203,7 +1203,7 @@ This section documents the architecture, technical decisions, and potential clou
 
 ## Architecture Diagram
 
-<img src="data/data/images/diagram.png" alt="Solution Architecture" width="50%">
+<img src="data/images/diagram.png" alt="Solution Architecture" width="50%">
 
 ---
 
