@@ -1203,46 +1203,7 @@ This section documents the architecture, technical decisions, and potential clou
 
 ## Architecture Diagram
 
-### Mermaid Diagram
-```mermaid
-flowchart TD
-    subgraph Extraction
-        A[Download CSVs from ONS S3] --> B[Raw CSV files stored in data/raw/]
-    end
-
-    subgraph Load
-        B --> C[Load raw CSVs into DuckDB tables]
-    end
-
-    subgraph Transform
-        C --> D[Data cleaning & validation in DuckDB]
-        D --> E[Filter Casa dos Ventos SPEs]
-        E --> F[Join SPE & Wind datasets]
-        F --> G[Export final partitioned Parquet to data/final_parquet_pipeline/]
-    end
-
-    subgraph Dimensional Modeling
-        G --> H[Build Star Schema]
-        H --> I[Dim tables: dim_spe, dim_conjunto, dim_tempo]
-        H --> J[Fact table: fact_generation]
-        I --> K[Data warehouse: data/warehouse/]
-        J --> K
-    end
-
-    subgraph API Layer
-        K --> L[FastAPI endpoints]
-        L --> M[GET /projects]
-        L --> N[GET /generation/{project_id}]
-        L --> O[GET /restrictions/summary]
-        L --> P[GET /health]
-    end
-
-    subgraph Validation
-        G --> Q[Validation pipeline]
-        Q --> R[Schema, freshness, business rules, completeness]
-        R --> S[data/validation_reports/validation_report.json]
-    end
-```
+![alt text](diagram.png)
 
 ---
 
