@@ -302,11 +302,11 @@ data/final_parquet/
 
 ## Premises and Design Decisions
 
-- Data is sourced from ONS public datasets (wind farms and SPEs) and assumed to be accurate;
-- Only SPEs belonging to Casa dos Ventos are included in the final dataset;
-- `id_ons` columns in the two datasets represent different levels of hierarchy, the join uses normalized names (`nom_conjuntousina` ↔ `nom_usina`) to ensure consistency;
-- A LEFT JOIN preserves SPE granularity while enriching with wind farm attributes;
-- Duplicates in wind farm data are removed to prevent many-to-many merge issues;
+- Data is sourced from ONS public datasets (wind farms and SPEs) and assumed to be accurate.
+- Only SPEs belonging to Casa dos Ventos are included in the final dataset.
+- `id_ons` columns in the two datasets represent different levels of hierarchy, the join uses normalized names (`nom_conjuntousina` ↔ `nom_usina`) to ensure consistency.
+- A LEFT JOIN preserves SPE granularity while enriching with wind farm attributes.
+- Duplicates in wind farm data are removed to prevent many-to-many merge issues.
 - Partitioning by `year` and `month` in Parquet files improves query performance for temporal analysis.
 
 # Second Part — Dimensional Modeling
@@ -586,9 +586,9 @@ Saved in:
 
 ## Premises and Design Decisions
 
-- Star Schema was chosen to optimize analytical queries;
-- Fact table granularity is SPE per timestamp to preserve operational detail for temporal analysis;
-- `cod_razaorestricao` is included in the fact table to allow restriction-level aggregations;
+- Star Schema was chosen to optimize analytical queries.
+- Fact table granularity is SPE per timestamp to preserve operational detail for temporal analysis.
+- `cod_razaorestricao` is included in the fact table to allow restriction-level aggregations.
 - All IDs and keys are surrogate keys to maintain referential integrity and simplify joins.
 
 # Third Part — Robust ELT Pipeline
@@ -895,12 +895,12 @@ This orchestration strategy was chosen because it provides:
 
 ## Premises and Design Decisions
 
-- DuckDB was chosen for in-memory analytical processing to efficiently handle the CSV datasets;
-- ELT approach (Extract → Load → Transform) ensures raw data is preserved and transformations are reproducible;
+- DuckDB was chosen for in-memory analytical processing to efficiently handle the CSV datasets.
+- ELT approach (Extract → Load → Transform) ensures raw data is preserved and transformations are reproducible.
 - `cod_razaorestricao` is preserved through transformations and joins to enable restriction-level analysis downstream.
-- All transformations are performed in SQL to leverage DuckDB performance;
-- Idempotency is ensured by using `CREATE OR REPLACE` and partitioned Parquet exports, allowing safe re-execution;
-- Logging and error handling are centralized to improve observability and operational monitoring;
+- All transformations are performed in SQL to leverage DuckDB performance.
+- Idempotency is ensured by using `CREATE OR REPLACE` and partitioned Parquet exports, allowing safe re-execution.
+- Logging and error handling are centralized to improve observability and operational monitoring.
 - Partitioning by `year` and `month` optimizes query performance for time-series analytics.
 
 # Fourth Part - Data Validation and Quality Assurance
@@ -1034,11 +1034,11 @@ This report contains:
 
 ## Premises and Design Decisions
 
-- Validation pipeline focuses on **data reliability, consistency, and completeness** for analytical use;
-- Partitioned Parquet datasets enable efficient validation over time-series data;
-- Validations are modular (schema, freshness, business rules, timestamp continuity, completeness) to simplify maintenance;
-- Logging and JSON reports improve **traceability, observability, and reproducibility**;
-- The pipeline is idempotent, it can be re-run without affecting the original dataset;
+- Validation pipeline focuses on **data reliability, consistency, and completeness** for analytical use.
+- Partitioned Parquet datasets enable efficient validation over time-series data.
+- Validations are modular (schema, freshness, business rules, timestamp continuity, completeness) to simplify maintenance.
+- Logging and JSON reports improve **traceability, observability, and reproducibility**.
+- The pipeline is idempotent, it can be re-run without affecting the original dataset.
 - Design assumes hourly frequency in timestamps, gaps are considered anomalies.
 
 
@@ -1188,9 +1188,99 @@ Generated from previous pipeline stages.
 
 ## Premises and Design Decisions
 
-- The API exposes only the pre-processed and modeled datasets;
-- Null values in cod_razaorestricao can be categorized as "without restriction";
-- Aggregations for generation and restrictions are performed at query-time using Pandas;
-- Swagger/OpenAPI documentation ensures discoverability and testing without external tools;
-- All business logic validation is done in the pipeline stage, the API serves read-only data;
+- The API exposes only the pre-processed and modeled datasets.
+- Null values in cod_razaorestricao can be categorized as "without restriction".
+- Aggregations for generation and restrictions are performed at query-time using Pandas.
+- Swagger/OpenAPI documentation ensures discoverability and testing without external tools.
+- All business logic validation is done in the pipeline stage, the API serves read-only data.
 - The design follows a modular structure to allow future extension (new endpoints or filters).
+
+# Sixth Part — Documentation
+
+This section documents the architecture, technical decisions, and potential cloud evolution for the project.
+
+---
+
+## Architecture Diagram
+
+### Mermaid Diagram
+```mermaid
+flowchart TD
+    subgraph Extraction
+        A[Download CSVs from ONS S3] --> B[Raw CSV files stored in data/raw/]
+    end
+
+    subgraph Load
+        B --> C[Load raw CSVs into DuckDB tables]
+    end
+
+    subgraph Transform
+        C --> D[Data cleaning & validation in DuckDB]
+        D --> E[Filter Casa dos Ventos SPEs]
+        E --> F[Join SPE & Wind datasets]
+        F --> G[Export final partitioned Parquet to data/final_parquet_pipeline/]
+    end
+
+    subgraph Dimensional Modeling
+        G --> H[Build Star Schema]
+        H --> I[Dim tables: dim_spe, dim_conjunto, dim_tempo]
+        H --> J[Fact table: fact_generation]
+        I --> K[Data warehouse: data/warehouse/]
+        J --> K
+    end
+
+    subgraph API Layer
+        K --> L[FastAPI endpoints]
+        L --> M[GET /projects]
+        L --> N[GET /generation/{project_id}]
+        L --> O[GET /restrictions/summary]
+        L --> P[GET /health]
+    end
+
+    subgraph Validation
+        G --> Q[Validation pipeline]
+        Q --> R[Schema, freshness, business rules, completeness]
+        R --> S[data/validation_reports/validation_report.json]
+    end
+```
+
+---
+
+## Technical Decisions
+
+- DuckDB: Chosen for fast, local analytical processing with Parquet support, simpler than full-fledged databases for this dataset size;
+- Parquet Partitioning: Partitioned by year and month to optimize time-based queries;
+- Left Join Strategy: Preserves all SPE records, enriches with wind farm data, avoids data loss;
+- Star Schema: Fact table at SPE-timestamp granularity, dimensions for descriptive context, balances query performance and simplicity;
+- FastAPI: Provides REST API with automatic Swagger/OpenAPI documentation and easy validation;
+- Validation Pipeline: Automated checks for schema, completeness, and business rules to ensure data reliability.
+
+---
+
+## 3. Cloud Evolution Proposal
+
+To scale and deploy this solution in production:
+
+1. **Compute Layer**
+   - Use **GCP Cloud Run** or **AWS Fargate** to host the API and ETL pipeline.
+   - Containerized Python environment for portability.
+
+2. **Storage**
+   - Move final Parquet datasets to **Google Cloud Storage (GCS)**, replacing the local `data/` folder.
+
+3. **Data Warehouse**
+   - Load Parquet into **BigQuery** for fast analytical queries and aggregation.
+
+4. **Orchestration**
+   - Schedule the ETL pipeline with **Cloud Scheduler** or **Airflow in Cloud Composer**.
+   - Monitor logs, retries, and failure notifications automatically.
+
+5. **API Layer**
+   - Cloud Run exposes FastAPI endpoints.
+   - Can connect directly to BigQuery for live queries if the dataset grows beyond local DuckDB feasibility.
+
+6. **Monitoring & Alerts**
+   - Use **Cloud Monitoring** and **Cloud Logging** to track ETL runs, API health, and data freshness.
+   - Alert for failures or schema drift.
+
+This approach allows scaling with dataset growth, ensures fault tolerance, and simplifies operational management in the cloud.
