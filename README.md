@@ -300,6 +300,15 @@ data/final_parquet/
 
 ---
 
+## Premises and Design Decisions
+
+- Data is sourced from ONS public datasets (wind farms and SPEs) and assumed to be accurate;
+- Only SPEs belonging to Casa dos Ventos are included in the final dataset;
+- `id_ons` columns in the two datasets represent different levels of hierarchy, the join uses normalized names (`nom_conjuntousina` ↔ `nom_usina`) to ensure consistency;
+- A LEFT JOIN preserves SPE granularity while enriching with wind farm attributes;
+- Duplicates in wind farm data are removed to prevent many-to-many merge issues;
+- Partitioning by `year` and `month` in Parquet files improves query performance for temporal analysis.
+
 # Second Part — Dimensional Modeling
 
 ## Dimensional Model
@@ -574,6 +583,13 @@ Saved in:
 - data/warehouse/facts/
 
 ---
+
+## Premises and Design Decisions
+
+- Star Schema was chosen to optimize analytical queries;
+- Fact table granularity is SPE per timestamp to preserve operational detail for temporal analysis;
+- `cod_razaorestricao` is included in the fact table to allow restriction-level aggregations;
+- All IDs and keys are surrogate keys to maintain referential integrity and simplify joins.
 
 # Third Part — Robust ELT Pipeline
 
@@ -877,6 +893,16 @@ This orchestration strategy was chosen because it provides:
 
 ---
 
+## Premises and Design Decisions
+
+- DuckDB was chosen for in-memory analytical processing to efficiently handle the CSV datasets;
+- ELT approach (Extract → Load → Transform) ensures raw data is preserved and transformations are reproducible;
+- `cod_razaorestricao` is preserved through transformations and joins to enable restriction-level analysis downstream.
+- All transformations are performed in SQL to leverage DuckDB performance;
+- Idempotency is ensured by using `CREATE OR REPLACE` and partitioned Parquet exports, allowing safe re-execution;
+- Logging and error handling are centralized to improve observability and operational monitoring;
+- Partitioning by `year` and `month` optimizes query performance for time-series analytics.
+
 # Fourth Part - Data Validation and Quality Assurance
 
 This stage of the project focuses on ensuring the reliability, consistency, and integrity of the data.
@@ -1005,6 +1031,15 @@ This report contains:
 - Logging
 
 ---
+
+## Premises and Design Decisions
+
+- Validation pipeline focuses on **data reliability, consistency, and completeness** for analytical use;
+- Partitioned Parquet datasets enable efficient validation over time-series data;
+- Validations are modular (schema, freshness, business rules, timestamp continuity, completeness) to simplify maintenance;
+- Logging and JSON reports improve **traceability, observability, and reproducibility**;
+- The pipeline is idempotent, it can be re-run without affecting the original dataset;
+- Design assumes hourly frequency in timestamps, gaps are considered anomalies.
 
 
 # Fifth Part — Data Serving (REST API)
@@ -1150,3 +1185,12 @@ The API reads from:
 Generated from previous pipeline stages.
 
 ---
+
+## Premises and Design Decisions
+
+- The API exposes only the pre-processed and modeled datasets;
+- Null values in cod_razaorestricao can be categorized as "without restriction";
+- Aggregations for generation and restrictions are performed at query-time using Pandas;
+- Swagger/OpenAPI documentation ensures discoverability and testing without external tools;
+- All business logic validation is done in the pipeline stage, the API serves read-only data;
+- The design follows a modular structure to allow future extension (new endpoints or filters).
