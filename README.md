@@ -20,6 +20,14 @@ python -m venv venv
 venv\Scripts\activate
 ```
 
+If you get a script execution error, run:
+
+```bash
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then activate the environment.
+
 ---
 
 ## 3. Install project dependencies
