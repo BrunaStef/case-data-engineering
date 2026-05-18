@@ -113,7 +113,7 @@ This step is responsible for ensuring the reliability and consistency of the con
 Execute the following command from the project root:
 
 ```bash
-python python src/transform/data_quality.py
+python src/transform/data_quality.py
 ```
 ---
 
